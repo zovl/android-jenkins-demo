@@ -1,5 +1,5 @@
 apply plugin: 'com.android.application'
-apply plugin: 'jacoco'
+apply from: "../jacoco.gradle"
 
 android {
     compileSdkVersion 25
@@ -34,7 +34,6 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
 
             signingConfig signingConfigs.debug
-            testCoverageEnabled true
         }
         release {
             buildConfigField "boolean", "LOG_DEBUG", "false"
@@ -46,9 +45,6 @@ android {
 
             signingConfig signingConfigs.release
         }
-    }
-    jacoco {
-        version "0.7.4.201502262128"
     }
     lintOptions {
         abortOnError false
@@ -67,29 +63,3 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile 'com.android.support.constraint:constraint-layout:1.0.0'
 }
-
-task jacocoTestReport(type:JacocoReport, dependsOn:"connectedAndroidTest") {
-    group = "Reporting"
-    description = "Generate Jacoco coverage reports after running tests."
-    reports{
-        xml.enabled = false
-        html.enabled = true
-        csv.enabled = false
-    }
-    classDirectories = fileTree(
-            dir : "$buildDir/intermediates/classes/debug",
-            excludes : [
-                    '**/*Test.class',
-                    '**/R.class',
-                    '**/R$*.class',
-                    '**/BuildConfig.*',
-                    '**/Manifest*.*'
-            ]
-    )
-    def coverageSourceDirs = ['src/main/java']
-    additionalSourceDirs = files(coverageSourceDirs)
-    sourceDirectories = files(coverageSourceDirs)
-    additionalClassDirs = files(coverageSourceDirs)
-    executionData = files("$buildDir/outputs/code-coverage/connected/coverage.ec")
-}
-

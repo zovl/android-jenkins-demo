@@ -22,9 +22,9 @@ allprojects {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
-/*
-task genaratePackage(dependsOn: assemble) {
+
+task doAssemble(dependsOn: "app:assemble") {
     doLast {
 
     }
-}*/
+}
