@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'jacoco'
 
 android {
     compileSdkVersion 25
@@ -13,19 +14,41 @@ android {
     }
     signingConfigs {
         release {
-            storeFile file('/keystore/keystore.jks')
+            storeFile file('../keystore/keystore.jks')
             storePassword "jenkins"
             keyAlias "jenkins"
             keyPassword "jenkins"
             v2SigningEnabled false
         }
-        debug {}
     }
     buildTypes {
-        release {
+        debug {
+            debuggable true
+            buildConfigField "boolean", "LOG_DEBUG", "true"
+
+            zipAlignEnabled false
+            shrinkResources false
+            minifyEnabled false
+
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+
+            signingConfig signingConfigs.debug
+            testCoverageEnabled true
         }
+        release {
+            buildConfigField "boolean", "LOG_DEBUG", "false"
+
+            zipAlignEnabled true
+            shrinkResources false
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+
+            signingConfig signingConfigs.release
+        }
+    }
+    jacoco {
+        version "0.7.4.201502262128"
     }
     lintOptions {
         abortOnError false
@@ -36,7 +59,7 @@ android {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile fileTree(include: ['*.jar'], dir: 'libs')
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
@@ -44,3 +67,29 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile 'com.android.support.constraint:constraint-layout:1.0.0'
 }
+
+task jacocoTestReport(type:JacocoReport, dependsOn:"connectedAndroidTest") {
+    group = "Reporting"
+    description = "Generate Jacoco coverage reports after running tests."
+    reports{
+        xml.enabled = false
+        html.enabled = true
+        csv.enabled = false
+    }
+    classDirectories = fileTree(
+            dir : "$buildDir/intermediates/classes/debug",
+            excludes : [
+                    '**/*Test.class',
+                    '**/R.class',
+                    '**/R$*.class',
+                    '**/BuildConfig.*',
+                    '**/Manifest*.*'
+            ]
+    )
+    def coverageSourceDirs = ['src/main/java']
+    additionalSourceDirs = files(coverageSourceDirs)
+    sourceDirectories = files(coverageSourceDirs)
+    additionalClassDirs = files(coverageSourceDirs)
+    executionData = files("$buildDir/outputs/code-coverage/connected/coverage.ec")
+}
+
